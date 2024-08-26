@@ -76,3 +76,4 @@ public class COVID{
         Console.WriteLine("Reporte PDF generado exitosamente.");
     }
 }
+
