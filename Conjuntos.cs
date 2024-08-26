@@ -1,27 +1,78 @@
-public static class EjConjuntos{
-    public static void Run(){
-        HashSet<int> conjuntoA = new HashSet<int>{1,3,5,7,9};
-        HashSet<int> conjuntoB = new HashSet<int>{0,2,4,6,8};
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.IO;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 
-        HashSet<int> operaciones = new HashSet<int>();
+public class COVID{
+    private HashSet<Ciudadano> conjuntoTotal;
+    private HashSet<Ciudadano> conjuntoPfizer;
+    private HashSet<Ciudadano> conjuntoAstrazeneca;
 
-        System.Console.Write("Conjunto A - ");
-        Conjuntos.Imprimir<int>(conjuntoA);
+    public COVID(){
+        conjuntoTotal = new HashSet<Ciudadano>();
+        conjuntoPfizer = new HashSet<Ciudadano>();
+        conjuntoAstrazeneca = new HashSet<Ciudadano>();
+    }
 
-        System.Console.Write("Conjunto B -");
-        Conjuntos.Imprimir<int>(conjuntoB);
+    public void InicializarConjuntos(){
+        for (int i = 1; i <= 500; i++){
+            conjuntoTotal.Add(new Ciudadano(i));
+        }
+        
+        for (int i = 1; i <= 75; i++){
+            conjuntoPfizer.Add(new Ciudadano(i));
+            conjuntoAstrazeneca.Add(new Ciudadano(i + 75));
+        }
+    }
 
-        // Operación Union
-        operaciones.UnionWith(conjuntoA);
-        operaciones.UnionWith(conjuntoB);
+    public IEnumerable<Ciudadano> ObtenerCiudadanosNoVacunados(){
+        return conjuntoTotal.Except(conjuntoPfizer.Union(conjuntoAstrazeneca));
+    }
 
-        System.Console.Write("conjuntoA union conjuntoB - ");
-        Conjuntos.Imprimir<int>(operaciones);
+    public IEnumerable<Ciudadano> ObtenerCiudadanosConAmbasVacunas(){
+        return conjuntoPfizer.Intersect(conjuntoAstrazeneca);
+    }
 
-        operaciones.Clear(); // limpiamos el conjunto
-        operaciones.UnionWith(conjuntoA);
-        operaciones.IntersectWith(conjuntoB); 
-        System.Console.Write("conjuntoA interseccion conjuntoB - ");
-        Conjuntos.Imprimir<int>(operaciones);
+    public IEnumerable<Ciudadano> ObtenerCiudadanosSoloPfizer(){
+        return conjuntoPfizer.Except(conjuntoAstrazeneca);
+    }
+
+    public IEnumerable<Ciudadano> ObtenerCiudadanosSoloAstrazeneca(){
+        return conjuntoAstrazeneca.Except(conjuntoPfizer);
+    }
+
+    public void GenerarReportePDF(string rutaArchivo){
+        Document documento = new Document();
+        PdfWriter.GetInstance(documento, new FileStream(rutaArchivo, FileMode.Create));
+        documento.Open();
+
+
+        documento.Add(new Paragraph("Reporte de campaña de vacunación COVID"));
+        documento.Add(new Paragraph(" "));
+
+        // Ciudadanos no vacunados
+        documento.Add(new Paragraph("Ciudadanos no vacunados:"));
+        documento.Add(new Paragraph(string.Join(", ", ObtenerCiudadanosNoVacunados().Select(c => c.Id))));
+        documento.Add(new Paragraph(" "));
+        
+        // Ciudadanos con ambas vacunas
+        documento.Add(new Paragraph("Ciudadanos con ambas vacunas:"));
+        documento.Add(new Paragraph(string.Join(", ", ObtenerCiudadanosConAmbasVacunas().Select(c => c.Id))));
+        documento.Add(new Paragraph(" "));
+
+        // Ciudadanos solo con Pfizer
+        documento.Add(new Paragraph("Ciudadanos solo con Pfizer:"));
+        documento.Add(new Paragraph(string.Join(", ", ObtenerCiudadanosSoloPfizer().Select(c => c.Id))));
+        documento.Add(new Paragraph(" ")); // Espacio en blanco
+
+        // Ciudadanos solo con Astrazeneca
+        documento.Add(new Paragraph("Ciudadanos solo con Astrazeneca:"));
+        documento.Add(new Paragraph(string.Join(", ", ObtenerCiudadanosSoloAstrazeneca().Select(c => c.Id))));
+
+        documento.Close();
+
+        Console.WriteLine("Reporte PDF generado exitosamente.");
     }
 }
